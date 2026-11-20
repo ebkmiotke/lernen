@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Lösungsstation Lernjob 8</title>
+<style>
+:root {
+  /* Layout: eine Spalte, Aufgabenkarten untereinander, Fortschrittsleiste oben fixiert */
+  --bg: #f7f4f4;
+  --surface: #ffffff;
+  --ink: #2a2324;
+  --muted: #6e6264;
+  --line: #e2d8d9;
+  --accent: #7a1f1f;
+  --accent-soft: #f3e6e6;
+  --ok: #2f6b3a;
+  --ok-soft: #e4f1e5;
+  --warn: #8a5a00;
+  --warn-soft: #fbf0d9;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1819; --surface: #272122; --ink: #f0e8e8; --muted: #b8a9ab; --line: #3d3435;
+    --accent: #e08a8a; --accent-soft: #3a2526; --ok: #8fd19b; --ok-soft: #22352a; --warn: #f0c46a; --warn-soft: #3a3020;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d1819; --surface: #272122; --ink: #f0e8e8; --muted: #b8a9ab; --line: #3d3435;
+  --accent: #e08a8a; --accent-soft: #3a2526; --ok: #8fd19b; --ok-soft: #22352a; --warn: #f0c46a; --warn-soft: #3a3020;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.5; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 0 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.progress { top: env(safe-area-inset-top, 0px); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.order-list { margin: 0; padding-left: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 14px; font-size: 15px; }
+.order-list b { color: var(--accent); display: inline-block; min-width: 1.4em; }
+.tf td:nth-child(2), .tf td:nth-child(3) { text-align: center; width: 84px; }
+header.top { padding: 28px 0 12px; display: grid; gap: 6px; }
+.eyebrow { font-size: 14px; color: var(--muted); letter-spacing: .02em; }
+h1 { font-family: var(--font-display); font-size: 32px; line-height: 1.15; margin: 0; text-wrap: balance; color: var(--accent); }
+h2 { font-family: var(--font-display); font-size: 22px; margin: 0; text-wrap: balance; }
+h3 { font-size: 17px; margin: 0 0 6px; }
+p { margin: 0; max-width: 68ch; }
+.intro { display: grid; gap: 10px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+.codebox { display: grid; gap: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+label { font-weight: 600; }
+input[type=text], textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; }
+textarea { min-height: 120px; resize: vertical; }
+input[type=text]:focus, textarea:focus, button:focus-visible, .seg input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
+input:disabled, textarea:disabled { opacity: .75; }
+.code-input { max-width: 220px; text-transform: uppercase; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.progress { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 14px; border-radius: 999px; padding: 3px 10px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); text-decoration: none; }
+.chip.t1, .chip.t2 { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.chip.done { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.tasks { display: grid; gap: 20px; }
+.task { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.task.state-t1, .task.state-t2 { border-left-color: var(--warn); }
+.task.state-done { border-left-color: var(--ok); }
+.task-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.meta { font-size: 14px; color: var(--muted); }
+.prompt b { color: var(--accent); }
+.grid-table { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); }
+td input[type=text] { padding: 6px 8px; }
+.fields { display: grid; gap: 10px; }
+.field { display: grid; gap: 4px; }
+.hint { font-size: 14px; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.seg legend { font-weight: 600; margin-bottom: 6px; }
+.seg label { font-weight: 400; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; }
+.seg span { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--bg); }
+.seg input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--accent); }
+button.primary { background: var(--accent); color: #fff; }
+button.secondary { background: transparent; color: var(--accent); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.feedback { border-radius: 8px; padding: 10px 12px; font-size: 15px; display: none; }
+.feedback.show { display: block; }
+.feedback.warn { background: var(--warn-soft); color: var(--warn); }
+.feedback.ok { background: var(--ok-soft); color: var(--ok); }
+.feedback.err { background: var(--accent-soft); color: var(--accent); }
+.tip { background: var(--warn-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+.tip b { color: var(--warn); }
+.solution { border: 1px dashed var(--ok); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; }
+.solution h3 { color: var(--ok); }
+.solution ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.notice { font-size: 14px; color: var(--muted); }
+.summary pre { white-space: pre-wrap; font-family: var(--font-body); font-size: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 320px; overflow: auto; margin: 0; }
+.dialog { display: none; background: var(--accent-soft); border-radius: 8px; padding: 12px; gap: 10px; }
+.dialog.show { display: grid; }
+@media (max-width: 480px) { body { font-size: 16px; } h1 { font-size: 26px; } .task { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">GG12 · LK Gesundheit · Herz-Kreislauf-System · Fr, 27.11.2026</div>
+    <h1>Lösungsstation Lernjob 8: Blutgefäße, Kreisläufe und Blutdruck</h1>
+  </header>
+
+  <section class="panel intro" aria-labelledby="so">
+    <h2 id="so">So funktioniert die Lösungsstation</h2>
+    <p>Bearbeiten Sie die Aufgaben aus M25 hier direkt. Wenn Sie eine Aufgabe vollständig bearbeitet haben, schätzen Sie sich ein und klicken auf <b>Prüfen</b>. Die Seite prüft, ob alle Felder ausgefüllt sind, ob die Mindestwortzahl erreicht ist und ob die wichtigen Fachbegriffe vorkommen. Reicht das noch nicht, bekommen Sie zuerst Tipp 1, dann Tipp 2. Spätestens beim dritten Versuch wird die Lösung freigeschaltet.</p>
+    <p class="notice">Ihre Eingaben bleiben auf diesem Gerät. Es wird nichts an die Schule oder an andere gesendet. Am Ende speichern oder kopieren Sie Ihr Ergebnis für Ihr Lernportfolio. Die Concept-Map zeichnen Sie weiterhin auf M25.</p>
+    <div class="codebox">
+      <label for="code">Ihr persönlicher Code (kein Name)</label>
+      <div class="row">
+        <input id="code" class="code-input" type="text" maxlength="8" autocomplete="off" placeholder="z. B. KAT07">
+        <span class="hint">4 bis 8 Zeichen, selbst ausgedacht. Nutzen Sie bei allen Lösungsstationen denselben Code.</span>
+      </div>
+      <div id="codeMsg" class="feedback err" role="status"></div>
+    </div>
+  </section>
+
+  <nav class="progress" aria-label="Fortschritt"><div class="chips" id="chips"></div></nav>
+  <div class="tasks" id="tasks"></div>
+
+  <section class="panel summary" aria-labelledby="erg" style="margin-top:20px">
+    <h2 id="erg">Mein Ergebnis</h2>
+    <p>Hier steht Ihr Ergebnis mit Code, Antworten, Selbsteinschätzung und dem Weg zur Lösung. Speichern Sie es als Datei oder kopieren Sie den Text.</p>
+    <div class="row">
+      <button class="primary" id="saveBtn" type="button">Ergebnis als Datei speichern</button>
+      <button class="secondary" id="copyBtn" type="button">Text kopieren</button>
+      <button class="secondary" id="resetBtn" type="button">Alles löschen und neu beginnen</button>
+    </div>
+    <div id="saveMsg" class="feedback" role="status"></div>
+    <div class="dialog" id="resetDialog" role="alertdialog" aria-labelledby="resetQ">
+      <p id="resetQ"><b>Wirklich alles löschen?</b> Ihre Antworten auf diesem Gerät gehen verloren.</p>
+      <div class="row"><button class="primary" id="resetYes" type="button">Ja, löschen</button><button class="secondary" id="resetNo" type="button">Abbrechen</button></div>
+    </div>
+    <pre id="summary" aria-live="polite"></pre>
+  </section>
+</div>
+
+<script>
+const SOL = {"P1": "eSYiOEVOKyZCQRBuLUosJmY6BE8rIhMMETgrWikndXIRX3l7RVoTCy9ehuaI0VkCMy8PDlkkdG8kLC8vEEslJkQOAjgiBnk2I3ApWCoiXxICbB1ZKyZ3YRFFeXtFWhMOJk0xJjk7BkZ7aEVaE3A+UHsALj0KQyMiQ1pIJT4EajYjcFkCMzUPDlk+dAQxJnVyBxMGNUVXXyUvBGogdXJKWSN5DUZJcgNWMSsmL0UFAilVXVkkL1RsbmsqDE4sIhF/SCgjWWVqLCIEWTMiEX9YPyFNKSM/OxcBZyJdU144I0smKi5uI0w0IkNcBGBqeSE0LiARRDMuUA4COC4GeTYvcA5BIi5fV15sBk0oJyViRUkuJFpXDRsrViF+ZDoBE3szVQxFIylQaWI7OwleLiJDV0ModhcxJnVyEUl5IfKORT4+GDMtJm4tSDU9VFwNOy9ffmIcJwtJLCJCQUggLE0rKT8nCkNnI1RADQ0lSjEjaykJ7uMzRVdZbC5dK2IJIhBZIStEQV53akwkMT8sBF8iNRFiWCA5BGo2L3BZAjM1Dw5ZPnQEMSZ1cgcTESJfVxFjKAZ5bT8qWxEzIw9WXykjGBYhIycGRTMiXx4NKImEKywubihIIy5QEkAlPhgyJyUnAg0KMkJZWCArTDAwd2ERSXl7RVYTOy9RMSc4bilYKiJfHg0oiYQrLC5uMkwpIw0dWSh0BDEmdSAMSCM1WFURYz5ce34/KltLhPtZQFlsME0oYgMrF1ciKQoSeykkXSspJy8VXSIpEUdDKGp1MDEgKwldMipBVw0qiY43Ji48Cw0jIl8Sf4/2Wy4xPzwKQHxnc15YODlIICsoJgBfZ29SUwNseBd2Yi8rFg0FK0RGSD9jBGo2L3BZAjM1Dw5ZPnQEMSZ1cgcTDCZBW0EgK0ogfmQsWxFoM1UMETguBis3OW4gQyMoRVpIIGpNKyZrDAReJitcV0AuOFkrfmQ6ARN7M1UMXikiSmUnJSlFBSQmHxIYrsqrdHJrjNBAbmsRQUgkOBghgfcgC0hnEFBcSXBlTCF8dzoBEykuVFZfJS0UZSSI6glBM2dGV0Q4L0plIylySlkjeQ1GSXIZTCokLWNFWCkjEXVMPytNNjYqOxZOL2dVR18vIhgBKy0oEF4uKF8JDT8vUDdiLDwK7tgiEXVIPytVMS0pKxdLK4SVUUUpZhgpIyUpFkwqIkMSbyA/TCMuPj0WEWgzVQwRYz5Ke35kOgRPKyIPDgIoI057", "P2": "eTcncFlBLnkNUBMLOFeG3S48RWY1IlhBQS0/XmVqAI3TXzciQ1lfKSNLKSM+KEwXe2hTDA0gI1YuJ2sFBEAqIkMSz8rYGAQtOToEDaXBoxJsPj5dNysuIEXPwdURee76OEggMCAvFUQrK1BASCJqEAqgycxIbCUgUFBIYGp7CqDJzEhsMiFfU0UhLxFloM3cRXsiKVRcDa7MqmUKJCYJWyIpVFwNrsyqZTAuLQ1ZIjURZEI+IlcjbHdhCUR5e11bE3AoBg4uLicLSDVnekBIJTlUJDctbk1hMilWV0MnOF0sMScvEEtufQ0dT3JqSiAhIzoADQwmXF9IPmraw9BrAhBDICJfU184L0osJ2tmFkwyIkNBWSMsXiQwJmdFz8HVEX5YIi1dKykqPgxBKyZDV0NsYn8kMSo7FlkmMkJRRWwrVmUmLiBFbCsxVF1BKSQRZaDN3EVhMilWV0M6L1YgLGtmFkwyIkNBWSMsXjcnIi0NBGelt6ANICNWLic5bjNCNS9eVANwZVQsfHciDBN7JQ9zXzgvSiwnJXJKT3lnV/GRJDhdK2IJIhBZZ3tTDFsjJxgNJzk0AENnMFRVEWMoBmlidyxbeyIpVFwRYygGZTg+I0VlIjVLV0NsIlErbms7C0wlL/KWQysjX2U0JCNFfiYyVEBeOCVeIyUuJgRBM2kRdkg/IlkpIGsnFllnI1hXDQA/ViInJS8XWSI1WFcNKSNWIGIKPBFINS5UHg0jKE8qKiduFkQiZ0JTWCk4SzEtLSgEXyoiQhJvID9MZSSI8g1fM2sRR0MoalwsJ2sCEEMgIl9ESCIvVmUkiPINXyIpEUFMOS9KNjYkKANfIi5SWkg/anopNz9gWQIrLg8OAjkmBg==", "P3": "eTcncFlBLnljR0UpPV03Ni5uAEQpKENWQykkAmUtOzoMQCYrEUdDOC9KZXN5fkoVd2dcX2UrZhgrLTkjBEFnJVhBDX14AWp6f2JFRSgkWVxCPidZKWIpJxYNdnQIHRV1Zhh5IHUMCVgzL15RRSg4TSYpd2EHE2cmUxIceHoXfHJrIwhlIGkRd0QiLxggKyU0AEEpIhF/SD85TSslazwARCQvRRJLj/ZKZSciIAANAy5QVUMjOV1lLCItDVlnJkRBA3BlVCx8dyIMEwkmUloNDi9UJDE/OwtKZzRFV0QrPhgzLTluBEErIlwSSSk4GHkgdT0cXjMoXVteLyJdeW0pcEV6IjVFEkkpP0wpKygmRUwpfRF2SD5qBCd8GDcIXSYzWVtGOTkEaiB1bgBfL4SHWllsdlp7Ci48H0s1IkBHSCIwBGogdW4QQyNnDVATHylQKSMsOApBMipUXBFjKAZpYi8vFg0PIkNIQCUkTTEnJTgKQTIqVFwNPz5dLCU/YFkCKy4PDkEldHwgMGtyBxMjLlBBWSMmUTYhIytZAiV5EWVIPj4YJy4uJwdZZyJFRUxsLVQgKygmRUIjIkMSXiUkUzFiJysMTi8zHRJaKSNUZTEiLQ0NIy5UEmopLPvhgdQrRUQpZ1VXX2wrSicnIjoAQyMiXxJgOTlTMC4qOhBfZzBUW1kpJBgwLC9uAUg1Z2ZbSSk4SzEjJSpFXi4pWkYDcGVULHx3IgwTCSZSWg0pI1YsJS4gRWAuKURGSCJqfTcqJCIQQyBnX/GJJC9KK2I4JwZFZyNYVw0bL0oxJ2s5DEgjIkMSSSknGBc3IysSSDUzHxJgKTlLIycjIgBfZyJfRl44L1AgLGs0Sw0FaRFWWD4pUGUkKiIWTi8iEX9MIjlbLSc/OgBDIDXyhO7TLxRlAzkjRUMuJFlGDS0/XmUKLjwfRYTxWVcBbBlINycoJgBDZyhVV19sLF0tLi4gAUhnFURaSDwiWTYnZXJKQS55DR1YIHQ=", "W": "eTJ1DABENDdYV0Epal6G/jluM0g1JVhcSTkkXyAscXJKXXl7RF4TcCZRexEqOwBfNDNeVEtsLlEjJD4gAUQiNUUSRCJqXCAsa3IHEwYrR1dCIC9WeW0pcEVIKTNdU0MralwgMWseBF8zLlBeST4/Wy4lLiimiSsrVEENJSRLZQAnOxENIyJDEmE5JF8gLCAvFUQrK1BASCJkBGouInBZQS55DVATBImcKC0sIgpPLikNHU9yalErYi8rCw0CNUhGRT4lQjw2LiBFTy4pVVdZbC5dK2IYLxBINTRFXUsqZARqLiJwWUEueXVbSGx2WnsOPiACSCkxVFxIInYXJ3xrKKaRLzVUXA0oK0tlMSo7AF80M15USz4vUSYqLm4nQTIzEUhYIWpULCwgKwsNEShDWkIqZARqLiJwWUEueXVbSGx2WnsuIiAOSGcMUF9AKTgEaiB1bhVYKjdFEkktORgHLj46Re77JVRADSgjXWV+KXAkQjUzUA4CLnQYLCxrKgBDZwzyhF88L0ouMC4nFkEmMlccEWMmUXt+JydbZClnVVdDbHZaewmI+BddIjVaU10lJlQkMC4gWQIleRFVRC4+GCEjOG4nQTIzEX3PzsgYJCxrKgxIZwpEQUYpJkIgLicrCw0mJRFHQyhqViwvJjpFESV5cn3PzsgEaiB1bgRYIWkNHUEldAQpK3ULDENnNEVXRCsvViEnOW4mYqXFsx99LThMLCMnKhdYJCwRQEglMExlJio9RREleXBGSCEwXSs2OTsIEWglDx4NKCNdZQM/IxBDIGdGW18oakwsJy0rFw0yKVUSXi8iViAuJysXA3toXVsTcCZRewAuJ0VvIitQQVk5JF9lMT8rDEozZ1VTXmx2WnsKLjwfQC4pREZIIjxXKTcmKwsRaCUPEkk5OFstYiON00UiNVQSZSk4QiMwLj8QSCk9EUdDKGpfN4H9jfpINSJCEn4vIlQkJT0hCVgqIl8cEWMmUXt+ZDsJEw=="};
+const KEY = "EBKNe-GG12-LJ8";
+const IMG = {};
+const STORE = "gg12-lj8-v1";
+const HEAD = "GG12 \u00b7 LK Gesundheit";
+const LJ = "Lernjob 8: Blutgef\u00e4\u00dfe, Kreisl\u00e4ufe und Blutdruck";
+const FILE = "GG12_LJ8_";
+const THRESH = 0.6;
+const TASKS = [
+  { id: "P1", no: "P1", title: "Arterien, Venen und Kapillaren", afb: "II",
+    prompt: "<b>Vergleichen</b> Sie Arterien, Venen und Kapillaren in der Tabelle.",
+    parts: [{ type: "grid", id: "g", head: ["Gefäß", "Wandaufbau", "Lumen und Wanddicke", "Blutdruck", "Besonderheit / Funktion"],
+      rows: [
+        ["Arterie", /drei|3|intima|media|muskel|elastisch/, /dick|eng|klein|schmal/, /hoch/, /elastisch|windkessel|puls|vom herzen|weg vom herz/],
+        ["Vene", /drei|3|dünn|wenig.{0,10}muskel|media.{0,20}dünn/, /weit|groß|dünn/, /niedrig|gering|klein/, /klappe|zum herzen|muskelpumpe|speicher/],
+        ["Kapillare", /endothel|einschicht|eine schicht|einlagig|basalmembran/, /eng|sehr dünn|klein|µm|mikrometer|haardünn/, /niedrig|gering|mittel|sink|fällt/, /austausch|diffusion|stoff|gas/]
+      ] }],
+    tips: ["Arterien und Venen haben drei Schichten (Intima, Media, Adventitia), die Media ist unterschiedlich dick. Kapillaren bestehen fast nur aus einer Schicht.",
+           "Hoher Druck braucht eine dicke, elastische Wand. Wie gelangt das Blut in den Beinvenen trotz niedrigem Druck zurück zum Herzen?"] },
+  { id: "P2", no: "P2", title: "Großer und kleiner Kreislauf", afb: "I–II",
+    prompt: "<b>Beschreiben</b> Sie den großen und den kleinen Kreislauf und <b>erklären</b> Sie, warum die Lungenarterie eine Arterie ist, obwohl sie sauerstoffarmes Blut führt.",
+    parts: [{ type: "text", id: "t", label: "Ihre Beschreibung und Erklärung", min: 45,
+      concepts: [/rechte[n]? kammer/, /linke[n]? kammer/, /lungenarterie/, /lungenvene/, /aorta/, /körper/, /sauerstoffarm|o2-arm|o₂-arm|wenig sauerstoff/, /vom herzen weg|weg vom herzen|richtung|herzfern/] }],
+    tips: ["Beginnen Sie jeden Kreislauf bei einer Kammer und enden Sie bei einem Vorhof.",
+           "Ob ein Gefäß Arterie oder Vene heißt, hängt nicht vom Sauerstoffgehalt ab, sondern von der Flussrichtung im Verhältnis zum Herzen."] },
+  { id: "P3", no: "P3", title: "Blutdruckmessung", afb: "II",
+    prompt: "Tragen Sie Ihre Messwerte ein und <b>werten</b> Sie sie <b>aus</b>.",
+    parts: [{ type: "counts", id: "n", fields: [
+      { id: "sr", label: "systolisch in Ruhe (mmHg)", min: 80, max: 180 }, { id: "dr", label: "diastolisch in Ruhe (mmHg)", min: 40, max: 110 },
+      { id: "sb", label: "systolisch nach Belastung", min: 80, max: 230 }, { id: "db", label: "diastolisch nach Belastung", min: 40, max: 120 }] },
+            { type: "text", id: "t", label: "Ihre Auswertung", min: 35,
+              concepts: [/systol/, /diastol/, /steig|höher|erhöh|nimmt zu/, /sympath|herzfrequenz|herzminuten|schlagvolumen|sauerstoffbedarf|bedarf|muskel/, /normal|optimal|120|80|grenz|hypertonie|bluthochdruck/, /gleich|kaum|wenig|leicht|sinkt/] }],
+    tips: ["Vergleichen Sie systolischen und diastolischen Wert getrennt: Welcher steigt bei Belastung deutlich, welcher kaum?",
+           "Ordnen Sie Ihren Ruhewert ein (optimal unter 120/80 mmHg, Bluthochdruck ab 140/90 mmHg) und begründen Sie den Anstieg mit Herzfrequenz, Schlagvolumen und Sympathikus. In den Muskeln weiten sich die Gefäße, deshalb ändert sich der diastolische Wert wenig."] },
+  { id: "W", no: "W", title: "Wahljob: Concept-Map Atmung und Herz-Kreislauf", afb: "II–III",
+    prompt: "Übertragen Sie sechs Verbindungen Ihrer Concept-Map als vollständige Sätze (Begriff – Verbindung – Begriff).",
+    parts: [{ type: "text", id: "t", label: "Sechs Verbindungen als Sätze", min: 50,
+      concepts: [/alveol/, /hämoglobin|erythrozyt/, /lungenvene|lungenarterie/, /aorta|linke kammer/, /kapillar/, /co2|co₂|kohlenstoffdioxid/, /atemzentrum|partialdruck|diffusion/, /herzminuten|herzfrequenz|schlagvolumen/] }],
+    thresh: 0.5,
+    tips: ["Folgen Sie einem Sauerstoffmolekül von der Alveole bis in die Muskelzelle und einem CO₂-Molekül zurück.",
+           "Gute Verbindungen enthalten ein Verb: „Hämoglobin bindet Sauerstoff“, „Die Lungenvenen führen sauerstoffreiches Blut zum linken Vorhof“."] }
+];
+
+function decode(b64) { const bin = atob(b64); const bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) ^ KEY.charCodeAt(i % KEY.length); return new TextDecoder("utf-8").decode(bytes); }
+const words = s => (s || "").trim().split(/\s+/).filter(w => /[\p{L}\d]/u.test(w)).length;
+const norm = s => (s || "").toLowerCase().replace(/ae/g, "ä").replace(/oe/g, "ö").replace(/ue/g, "ü").replace(/ss/g, "ß");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const rt = (re, s) => re.test((s || "").toLowerCase()) || re.test(norm(s));
+const letters = s => (s || "").toUpperCase().replace(/[^A-Z]/g, "");
+const num = s => parseFloat(String(s || "").replace(",", "."));
+
+let state = { code: "", t: {} };
+const blank = () => ({ vals: {}, self: "", attempts: 0, sig: "", status: "open", via: "", corr: "", last: "" });
+TASKS.forEach(t => state.t[t.id] = blank());
+try { const raw = localStorage.getItem(STORE); if (raw) { const s = JSON.parse(raw); if (s && s.t) { state.code = s.code || ""; TASKS.forEach(t => { if (s.t[t.id]) state.t[t.id] = Object.assign(blank(), s.t[t.id]); }); } } } catch (e) {}
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} renderChips(); renderSummary(); }
+
+const inp = (t, k, label, ph) => `<input type="text" id="${t.id}-${k}" data-k="${k}" aria-label="${esc(label)}" value="${esc(state.t[t.id].vals[k])}"${ph ? ` placeholder="${esc(ph)}"` : ""}>`;
+function partHTML(t, p) {
+  if (p.label && p.type !== "text") var lab = `<span style="font-weight:600">${esc(p.label)}</span>`; else var lab = "";
+  if (p.type === "grid") {
+    const rows = p.rows.map((r, i) => `<tr><td><b>${esc(r[0])}</b></td>` + r.slice(1).map((re, j) => re ? `<td>${inp(t, `${p.id}${i}_${j}`, r[0] + ", " + p.head[j + 1])}</td>` : `<td>–</td>`).join("") + `</tr>`).join("");
+    return `${lab}<div class="grid-table"><table><tr>${p.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr>${rows}</table></div>`;
+  }
+  if (p.type === "fields") {
+    return `${lab}<div class="fields" style="grid-template-columns:repeat(auto-fit,minmax(${p.minw || 200}px,1fr))">${p.fields.map(f => `<div class="field"><label for="${t.id}-${p.id}${f.id}">${esc(f.label)}</label>${inp(t, p.id + f.id, f.label)}</div>`).join("")}</div>`;
+  }
+  if (p.type === "order") {
+    return `${lab}<ul class="order-list">${p.items.map(([k, v]) => `<li><b>${k}</b> ${esc(v)}</li>`).join("")}</ul><div class="field"><label for="${t.id}-${p.id}">${esc(p.prompt)}</label>${inp(t, p.id, p.prompt, p.ph)}<span class="hint" id="${t.id}-${p.id}-n"></span></div>`;
+  }
+  if (p.type === "tf") {
+    const rows = p.items.map((it, i) => `<tr><td>${esc(it[0])}</td>${["richtig", "falsch"].map(v => `<td><input type="radio" name="${t.id}-${p.id}${i}" value="${v}" aria-label="${esc(it[0])}: ${v}" ${state.t[t.id].vals[p.id + i] === v ? "checked" : ""} data-r="${p.id}${i}"></td>`).join("")}</tr>`).join("");
+    return `${lab}<div class="grid-table"><table class="tf"><tr><th>Aussage</th><th>richtig</th><th>falsch</th></tr>${rows}</table></div>`;
+  }
+  if (p.type === "counts") {
+    return `${lab}<div class="row">${p.fields.map(f => `<div class="field" style="width:${f.w || 190}px"><label for="${t.id}-${p.id}${f.id}">${esc(f.label)}</label>${inp(t, p.id + f.id, f.label)}</div>`).join("")}</div>`;
+  }
+  if (p.type === "text") {
+    return `<div class="field"><label for="${t.id}-${p.id}">${esc(p.label)}</label><textarea id="${t.id}-${p.id}" data-k="${p.id}">${esc(state.t[t.id].vals[p.id])}</textarea><span class="hint" id="${t.id}-${p.id}-wc">mindestens ${p.min} Wörter</span></div>`;
+  }
+  return "";
+}
+function renderTasks() {
+  let html = "", lastPart = "";
+  TASKS.forEach((t, i) => {
+    const st = state.t[t.id];
+    if (t.part && t.part !== lastPart) { html += `<h2 style="margin-top:${i ? 10 : 0}px">${esc(t.part)}</h2>`; lastPart = t.part; }
+    const img = t.img ? `<figure style="margin:0"><img src="${IMG[t.img]}" alt="${esc(t.alt || "")}" style="width:100%;border-radius:8px;border:1px solid var(--line);background:#fff"></figure>` : "";
+    html += `<article class="task" id="task-${t.id}" aria-labelledby="h-${t.id}">
+      <div class="task-head"><h3 id="h-${t.id}">${esc(t.no)}: ${esc(t.title)}</h3><span class="meta">${t.afb ? "AFB " + t.afb : ""}</span></div>
+      <p class="prompt">${t.prompt}</p>${img}
+      <div class="fields">${t.parts.map(p => partHTML(t, p)).join("")}</div>
+      <fieldset class="seg" id="${t.id}-self"><legend>Wie sicher sind Sie bei Ihrer Antwort?</legend>
+        ${["sicher", "teilweise", "unsicher"].map(s => `<label><input type="radio" name="${t.id}-self" value="${s}" ${st.self === s ? "checked" : ""}><span>${s}</span></label>`).join("")}
+      </fieldset>
+      <div class="row"><button class="primary" type="button" data-check="${t.id}">Prüfen</button><span class="hint" id="${t.id}-att"></span></div>
+      <div class="feedback" id="${t.id}-fb" role="status"></div><div id="${t.id}-tips"></div><div id="${t.id}-sol"></div>
+    </article>`;
+  });
+  document.getElementById("tasks").innerHTML = html;
+  TASKS.forEach(t => { bindTask(t); paintTask(t); });
+}
+function bindTask(t) {
+  const el = document.getElementById("task-" + t.id);
+  el.querySelectorAll("[data-k]").forEach(i => i.addEventListener("input", () => { state.t[t.id].vals[i.dataset.k] = i.value; extras(t); save(); }));
+  el.querySelectorAll("[data-r]").forEach(r => r.addEventListener("change", () => { state.t[t.id].vals[r.dataset.r] = r.value; save(); }));
+  el.querySelectorAll(`input[name="${t.id}-self"]`).forEach(r => r.addEventListener("change", () => { state.t[t.id].self = r.value; save(); }));
+  el.querySelector(`[data-check="${t.id}"]`).addEventListener("click", () => check(t));
+  extras(t);
+}
+function extras(t) {
+  const v = state.t[t.id].vals;
+  t.parts.forEach(p => {
+    if (p.type === "text") { const s = document.getElementById(`${t.id}-${p.id}-wc`); if (s) s.textContent = `${words(v[p.id])} von mindestens ${p.min} Wörtern`; }
+    if (p.type === "order") { const s = document.getElementById(`${t.id}-${p.id}-n`); if (s) s.textContent = `${letters(v[p.id]).length} von ${p.solution.length} Buchstaben`; }
+  });
+}
+function paintTask(t) {
+  const st = state.t[t.id], el = document.getElementById("task-" + t.id);
+  el.classList.remove("state-t1", "state-t2", "state-done");
+  if (st.status === "done") el.classList.add("state-done"); else if (st.attempts === 1) el.classList.add("state-t1"); else if (st.attempts >= 2) el.classList.add("state-t2");
+  const nTips = Math.min(st.status === "done" ? st.attempts - 1 : st.attempts, 2); let tips = "";
+  for (let i = 0; i < nTips; i++) tips += `<div class="tip"><b>Tipp ${i + 1}:</b> ${esc(t.tips[i])}</div>`;
+  document.getElementById(t.id + "-tips").innerHTML = tips;
+  document.getElementById(t.id + "-att").textContent = st.status === "done" ? "" : (st.attempts ? `Versuch ${st.attempts} von 3` : "");
+  const btn = el.querySelector(`[data-check="${t.id}"]`); btn.disabled = st.status === "done"; btn.textContent = st.status === "done" ? "Lösung freigeschaltet" : "Prüfen";
+  const fb = document.getElementById(t.id + "-fb");
+  if (st.last) { fb.className = "feedback show " + (st.status === "done" ? "ok" : "warn"); fb.textContent = st.last; } else fb.className = "feedback";
+  const sol = document.getElementById(t.id + "-sol");
+  if (st.status === "done") {
+    if (!sol.dataset.open) {
+      sol.innerHTML = `<div class="solution"><h3>Lösung</h3>${decode(SOL[t.id])}<div class="field"><label for="${t.id}-corr">Meine Korrektur oder Ergänzung</label><textarea id="${t.id}-corr" style="min-height:80px">${esc(st.corr)}</textarea></div></div>`;
+      sol.dataset.open = "1"; document.getElementById(t.id + "-corr").addEventListener("input", e => { st.corr = e.target.value; save(); });
+    }
+  } else { sol.innerHTML = ""; delete sol.dataset.open; }
+}
+function evaluate(t) {
+  const v = state.t[t.id].vals; let total = 0, hit = 0, missing = false, wordsOk = true, minW = 0;
+  const filled = k => !!(v[k] && String(v[k]).trim());
+  t.parts.forEach(p => {
+    if (p.type === "grid") p.rows.forEach((r, i) => r.slice(1).forEach((re, j) => { if (!re) return; const k = `${p.id}${i}_${j}`; if (!filled(k)) missing = true; total++; if (rt(re, v[k])) hit++; }));
+    if (p.type === "fields") p.fields.forEach(f => { const k = p.id + f.id; if (!filled(k)) missing = true; total++; if (rt(f.re, v[k])) hit++; });
+    if (p.type === "order") { const a = letters(v[p.id]); if (a.length < p.solution.length) missing = true; total += p.solution.length; for (let i = 0; i < p.solution.length; i++) if (a[i] === p.solution[i]) hit++; }
+    if (p.type === "tf") p.items.forEach((it, i) => { const a = v[p.id + i]; if (!a) missing = true; total++; if (a === (it[1] ? "richtig" : "falsch")) hit++; });
+    if (p.type === "counts") p.fields.forEach(f => { const k = p.id + f.id; if (!filled(k)) missing = true; total++; const n = num(v[k]); if (n >= f.min && n <= f.max) hit++; });
+    if (p.type === "text") { if (words(v[p.id]) < p.min) { wordsOk = false; minW = p.min; } total += p.concepts.length; p.concepts.forEach(re => { if (rt(re, v[p.id])) hit++; }); }
+  });
+  return { total, hit, missing, wordsOk, minW };
+}
+function check(t) {
+  const st = state.t[t.id];
+  if (!/^[A-Za-z0-9ÄÖÜäöü]{4,8}$/.test(state.code)) { const m = document.getElementById("codeMsg"); m.textContent = "Bitte tragen Sie oben zuerst Ihren Code ein (4 bis 8 Buchstaben oder Ziffern, kein Name)."; m.classList.add("show"); document.getElementById("code").focus(); return; }
+  const fb = document.getElementById(t.id + "-fb"); const r = evaluate(t);
+  if (r.missing || !r.wordsOk) { const parts = []; if (r.missing) parts.push("Es sind noch nicht alle Felder ausgefüllt."); if (!r.wordsOk) parts.push(`Ihre Antwort hat noch weniger als ${r.minW} Wörter.`); fb.className = "feedback show err"; fb.textContent = parts.join(" ") + " Das zählt noch nicht als Versuch."; return; }
+  if (!st.self) { fb.className = "feedback show err"; fb.textContent = "Bitte schätzen Sie zuerst ein, wie sicher Sie sich sind. Das zählt noch nicht als Versuch."; return; }
+  const sig = JSON.stringify(st.vals);
+  if (st.attempts > 0 && sig === st.sig) { fb.className = "feedback show err"; fb.textContent = "Sie haben seit dem letzten Versuch nichts verändert. Überarbeiten Sie Ihre Antwort mithilfe des Tipps."; return; }
+  st.sig = sig; st.attempts++;
+  const share = r.total ? r.hit / r.total : 1; const what = `${r.hit} von ${r.total} wichtigen Einträgen und Fachbegriffen erkannt`;
+  const th = t.thresh || THRESH;
+  if (share >= th) { st.status = "done"; st.via = st.attempts === 1 ? "direkt im 1. Versuch" : `im ${st.attempts}. Versuch nach Tipp ${st.attempts - 1}`; st.last = `Gut gemacht: ${what}. Die Lösung ist freigeschaltet. Vergleichen Sie und ergänzen Sie unten, was fehlt.`; }
+  else if (st.attempts >= 3) { st.status = "done"; st.via = "nach 3 Versuchen (Kriterium nicht erreicht)"; st.last = `${what}. Die Lösung ist jetzt freigeschaltet. Arbeiten Sie die Lücken gründlich nach und tragen Sie Ihre Korrektur unten ein.`; }
+  else st.last = `${what}. Das reicht noch nicht. Lesen Sie Tipp ${st.attempts} und überarbeiten Sie Ihre Antwort.`;
+  save(); paintTask(t);
+}
+function renderChips() {
+  document.getElementById("chips").innerHTML = TASKS.map(t => { const st = state.t[t.id];
+    const cls = st.status === "done" ? "done" : st.attempts === 1 ? "t1" : st.attempts >= 2 ? "t2" : "";
+    const lab = st.status === "done" ? "Lösung frei" : st.attempts ? `Tipp ${Math.min(st.attempts, 2)}` : "offen";
+    return `<a class="chip ${cls}" href="#task-${t.id}">${esc(t.chip || t.no)}: ${lab}</a>`; }).join("");
+}
+function plainAnswer(t) {
+  const v = state.t[t.id].vals, L = [];
+  t.parts.forEach(p => {
+    if (p.type === "grid") p.rows.forEach((r, i) => L.push(`  ${r[0]}: ` + r.slice(1).map((re, j) => re ? `${p.head[j + 1]} ${v[`${p.id}${i}_${j}`] || "–"}` : null).filter(Boolean).join(" | ")));
+    if (p.type === "fields") p.fields.forEach(f => L.push(`  ${f.label}: ${v[p.id + f.id] || "–"}`));
+    if (p.type === "order") L.push(`  Reihenfolge: ${letters(v[p.id]) || "–"}`);
+    if (p.type === "tf") p.items.forEach((it, i) => L.push(`  ${it[0]} – ${v[p.id + i] || "–"}`));
+    if (p.type === "counts") L.push("  " + p.fields.map(f => `${f.label}: ${v[p.id + f.id] || "–"}`).join(" | "));
+    if (p.type === "text") L.push(`  ${p.label}: ${(v[p.id] || "–").trim()}`);
+  });
+  return L.join("\n");
+}
+function summaryText() {
+  const d = new Date();
+  const L = [`${HEAD} · ${LJ}`, `Code: ${state.code || "–"}    Stand: ${d.toLocaleDateString("de-DE")} ${d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}`, ""];
+  TASKS.forEach(t => { const st = state.t[t.id];
+    L.push(`${t.no}: ${t.title}${t.afb ? ` (AFB ${t.afb})` : ""}`);
+    L.push(`  Selbsteinschätzung: ${st.self || "–"} · Lösung: ${st.status === "done" ? "freigeschaltet " + st.via : (st.attempts ? `noch nicht frei (${st.attempts} Versuch${st.attempts > 1 ? "e" : ""})` : "noch nicht bearbeitet")}`);
+    L.push(plainAnswer(t)); if (st.corr && st.corr.trim()) L.push(`  Meine Korrektur: ${st.corr.trim()}`); L.push(""); });
+  return L.join("\n");
+}
+function renderSummary() { document.getElementById("summary").textContent = summaryText(); }
+function summaryHTML() { return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>${esc(LJ)} – ${esc(state.code)}</title><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.45;max-width:180mm;margin:15mm auto;color:#222}h1{font-size:15pt;color:#7a1f1f;margin:0 0 4pt}pre{white-space:pre-wrap;font-family:Arial,sans-serif}</style></head><body><h1>${esc(LJ)}</h1><pre>${esc(summaryText())}</pre></body></html>`; }
+function msg(text, kind) { const m = document.getElementById("saveMsg"); m.className = "feedback show " + kind; m.textContent = text; }
+document.getElementById("saveBtn").addEventListener("click", () => {
+  const filename = `${FILE}${(state.code || "ohneCode").toUpperCase()}.html`, data = summaryHTML();
+  try { const url = URL.createObjectURL(new Blob([data], { type: "text/html" })); const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); msg("Die Datei wird gespeichert (iPad: Ordner „Downloads“ in der App Dateien). Erscheint nichts, nutzen Sie „Text kopieren“.", "ok"); }
+  catch (e) { msg("Speichern ist hier nicht möglich. Nutzen Sie „Text kopieren“ und fügen Sie den Text in ein Dokument ein.", "err"); }
+});
+document.getElementById("copyBtn").addEventListener("click", async () => { try { await navigator.clipboard.writeText(summaryText()); msg("Der Text ist kopiert. Fügen Sie ihn in ein Dokument ein.", "ok"); } catch (e) { msg("Kopieren ist hier nicht möglich. Markieren Sie den Text im Kasten und kopieren Sie ihn von Hand.", "err"); } });
+document.getElementById("resetBtn").addEventListener("click", () => document.getElementById("resetDialog").classList.add("show"));
+document.getElementById("resetNo").addEventListener("click", () => document.getElementById("resetDialog").classList.remove("show"));
+document.getElementById("resetYes").addEventListener("click", () => { state = { code: "", t: {} }; TASKS.forEach(t => state.t[t.id] = blank()); try { localStorage.removeItem(STORE); } catch (e) {} document.getElementById("code").value = ""; document.getElementById("resetDialog").classList.remove("show"); document.getElementById("saveMsg").className = "feedback"; renderTasks(); renderChips(); renderSummary(); });
+const codeEl = document.getElementById("code"); codeEl.value = state.code;
+codeEl.addEventListener("input", () => { state.code = codeEl.value.trim().toUpperCase(); document.getElementById("codeMsg").classList.remove("show"); save(); });
+renderTasks(); renderChips(); renderSummary();
+
+</script>
+<footer class="wrap notice" style="padding-block:0 24px">Erzbischöfliches Berufskolleg Neuss · LK Gesundheit · Diese Seite speichert nichts auf einem Server.</footer>
+</body>
+</html>
