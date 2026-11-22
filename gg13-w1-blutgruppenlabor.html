@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Virtuelles Blutgruppenlabor</title>
+<style>
+:root {
+  /* Layout: eine Spalte, Aufgabenkarten untereinander, Fortschrittsleiste oben fixiert */
+  --bg: #f7f4f4;
+  --surface: #ffffff;
+  --ink: #2a2324;
+  --muted: #6e6264;
+  --line: #e2d8d9;
+  --accent: #7a1f1f;
+  --accent-soft: #f3e6e6;
+  --ok: #2f6b3a;
+  --ok-soft: #e4f1e5;
+  --warn: #8a5a00;
+  --warn-soft: #fbf0d9;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1819; --surface: #272122; --ink: #f0e8e8; --muted: #b8a9ab; --line: #3d3435;
+    --accent: #e08a8a; --accent-soft: #3a2526; --ok: #8fd19b; --ok-soft: #22352a; --warn: #f0c46a; --warn-soft: #3a3020;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d1819; --surface: #272122; --ink: #f0e8e8; --muted: #b8a9ab; --line: #3d3435;
+  --accent: #e08a8a; --accent-soft: #3a2526; --ok: #8fd19b; --ok-soft: #22352a; --warn: #f0c46a; --warn-soft: #3a3020;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.5; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 0 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.progress { top: env(safe-area-inset-top, 0px); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.order-list { margin: 0; padding-left: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 14px; font-size: 15px; }
+.order-list b { color: var(--accent); display: inline-block; min-width: 1.4em; }
+.tf td:nth-child(2), .tf td:nth-child(3) { text-align: center; width: 84px; }
+header.top { padding: 28px 0 12px; display: grid; gap: 6px; }
+.eyebrow { font-size: 14px; color: var(--muted); letter-spacing: .02em; }
+h1 { font-family: var(--font-display); font-size: 32px; line-height: 1.15; margin: 0; text-wrap: balance; color: var(--accent); }
+h2 { font-family: var(--font-display); font-size: 22px; margin: 0; text-wrap: balance; }
+h3 { font-size: 17px; margin: 0 0 6px; }
+p { margin: 0; max-width: 68ch; }
+.intro { display: grid; gap: 10px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+.codebox { display: grid; gap: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+label { font-weight: 600; }
+input[type=text], textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; }
+textarea { min-height: 120px; resize: vertical; }
+input[type=text]:focus, textarea:focus, button:focus-visible, .seg input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
+input:disabled, textarea:disabled { opacity: .75; }
+.code-input { max-width: 220px; text-transform: uppercase; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.progress { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 14px; border-radius: 999px; padding: 3px 10px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); text-decoration: none; }
+.chip.t1, .chip.t2 { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.chip.done { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.tasks { display: grid; gap: 20px; }
+.task { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.task.state-t1, .task.state-t2 { border-left-color: var(--warn); }
+.task.state-done { border-left-color: var(--ok); }
+.task-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.meta { font-size: 14px; color: var(--muted); }
+.prompt b { color: var(--accent); }
+.grid-table { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); }
+td input[type=text] { padding: 6px 8px; }
+.fields { display: grid; gap: 10px; }
+.field { display: grid; gap: 4px; }
+.hint { font-size: 14px; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.seg legend { font-weight: 600; margin-bottom: 6px; }
+.seg label { font-weight: 400; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; }
+.seg span { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--bg); }
+.seg input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--accent); }
+button.primary { background: var(--accent); color: #fff; }
+button.secondary { background: transparent; color: var(--accent); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.feedback { border-radius: 8px; padding: 10px 12px; font-size: 15px; display: none; }
+.feedback.show { display: block; }
+.feedback.warn { background: var(--warn-soft); color: var(--warn); }
+.feedback.ok { background: var(--ok-soft); color: var(--ok); }
+.feedback.err { background: var(--accent-soft); color: var(--accent); }
+.tip { background: var(--warn-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+.tip b { color: var(--warn); }
+.solution { border: 1px dashed var(--ok); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; }
+.solution h3 { color: var(--ok); }
+.solution ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.notice { font-size: 14px; color: var(--muted); }
+.summary pre { white-space: pre-wrap; font-family: var(--font-body); font-size: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 320px; overflow: auto; margin: 0; }
+.dialog { display: none; background: var(--accent-soft); border-radius: 8px; padding: 12px; gap: 10px; }
+.dialog.show { display: grid; }
+@media (max-width: 480px) { body { font-size: 16px; } h1 { font-size: 26px; } .task { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+
+.lab-grid { display: grid; gap: 14px; }
+.card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.well { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 8px; display: grid; gap: 6px; justify-items: center; }
+.well b { font-size: 14px; }
+.drop { width: 100%; max-width: 150px; aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--line); background: #fff; position: relative; overflow: hidden; }
+.drop svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.well button { font-size: 14px; padding: 6px 10px; }
+.result { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.result select { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.bags { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.bag { border: 2px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; background: var(--surface); cursor: pointer; font-weight: 600; user-select: none; }
+.bag input { margin-right: 6px; }
+.bag.sel { border-color: var(--accent); background: var(--accent-soft); }
+.bag.good { border-color: var(--ok); background: var(--ok-soft); }
+.bag.bad { border-color: #b3261e; background: #fbe4e2; color: #5c1410; }
+.legend { font-size: 14px; color: var(--muted); }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">GG13 · LK Gesundheit · Blut und Immunsystem · Mi, 25.11.2026</div>
+    <h1>Virtuelles Blutgruppenlabor</h1>
+  </header>
+
+  <section class="panel intro">
+    <h2>So arbeiten Sie im Labor</h2>
+    <p>Sie bestimmen die Blutgruppen von vier Patientinnen und Patienten mit dem Bedside-Test. Tippen Sie bei jedem Testfeld auf <b>Serum auftropfen</b> und beobachten Sie: <b>Verklumpt</b> das Blut (Agglutination) oder bleibt es <b>gleichmäßig</b> rot? Tragen Sie die Beobachtung auf M9 ein und wählen Sie dann Blutgruppe und Rhesusfaktor. Zum Schluss stellen Sie passende Blutkonserven für eine Transfusion zusammen.</p>
+    <p class="notice">Es wird nichts gespeichert oder gesendet. Am Ende können Sie Ihr Ergebnis kopieren und in Ihr Lernportfolio einfügen.</p>
+  </section>
+
+  <nav class="progress" aria-label="Fortschritt"><div class="chips" id="chips"></div></nav>
+  <div class="lab-grid" id="proben" style="margin-top:14px"></div>
+
+  <section class="panel" style="margin-top:14px" aria-labelledby="tr">
+    <h2 id="tr">Teil 2: Transfusion</h2>
+    <p id="trText"></p>
+    <p class="legend">Tippen Sie alle Erythrozytenkonzentrate an, die Sie geben dürften, und klicken Sie dann auf <b>Prüfen</b>.</p>
+    <div class="bags" id="bags"></div>
+    <div class="row"><button class="primary" type="button" id="trCheck">Prüfen</button><span class="hint" id="trAtt"></span></div>
+    <div class="feedback" id="trFb" role="status"></div>
+  </section>
+
+  <section class="panel summary" style="margin-top:20px" aria-labelledby="erg">
+    <h2 id="erg">Mein Ergebnis</h2>
+    <div class="row"><button class="secondary" id="copyBtn" type="button">Text kopieren</button><button class="secondary" id="resetBtn" type="button">Neu beginnen</button></div>
+    <div id="saveMsg" class="feedback" role="status"></div>
+    <pre id="summary" aria-live="polite"></pre>
+  </section>
+</div>
+<script>
+const PROBEN = [["Probe 1 – Herr K., 58 J.", 1, 0, 1], ["Probe 2 – Frau S., 31 J.", 0, 0, 0], ["Probe 3 – Herr T., 24 J.", 1, 1, 1], ["Probe 4 – Frau M., 45 J.", 0, 1, 0]];
+const SERA = [["A", "Anti-A", "#2e75b6"], ["B", "Anti-B", "#d4a017"], ["D", "Anti-D", "#e8e8e8"]];
+const groupOf = p => (p[1] && p[2] ? "AB" : p[1] ? "A" : p[2] ? "B" : "0");
+const rhOf = p => p[3] ? "Rh-positiv" : "Rh-negativ";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let st = PROBEN.map(() => ({ drops: [false, false, false], g: "", rh: "", tries: 0, ok: false }));
+let tr = { sel: [], tries: 0, ok: false };
+
+function rnd(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+function dropSVG(i, k, done, clump) {
+  const r = rnd(i * 31 + k * 7 + 3); let dots = "";
+  if (!done) return `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="#c2302b" opacity=".85"/></svg>`;
+  if (clump) {
+    for (let c = 0; c < 9; c++) { const cx = 22 + r() * 56, cy = 22 + r() * 56, n = 6 + Math.floor(r() * 6);
+      for (let j = 0; j < n; j++) dots += `<circle cx="${(cx + (r() - .5) * 9).toFixed(1)}" cy="${(cy + (r() - .5) * 9).toFixed(1)}" r="${(2.6 + r() * 1.6).toFixed(1)}" fill="#8e1b17"/>`; }
+    return `<svg viewBox="0 0 100 100" role="img" aria-label="Verklumpung"><circle cx="50" cy="50" r="40" fill="#f3d6d4"/>${dots}</svg>`;
+  }
+  for (let j = 0; j < 120; j++) { const a = r() * 6.283, d = 36 * Math.sqrt(r()); dots += `<circle cx="${(50 + Math.cos(a) * d).toFixed(1)}" cy="${(50 + Math.sin(a) * d).toFixed(1)}" r="2.2" fill="#b3261e" opacity=".8"/>`; }
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="keine Verklumpung"><circle cx="50" cy="50" r="40" fill="#d7524c"/>${dots}</svg>`;
+}
+function renderProben() {
+  document.getElementById("proben").innerHTML = PROBEN.map((p, i) => {
+    const s = st[i];
+    const wells = SERA.map(([k, name, col], j) => `<div class="well"><b>${name}</b><div class="drop">${dropSVG(i, j, s.drops[j], p[j + 1])}</div>
+      <button type="button" class="secondary" data-p="${i}" data-w="${j}" ${s.drops[j] ? "disabled" : ""}>${s.drops[j] ? "aufgetropft" : "Serum auftropfen"}</button></div>`).join("");
+    const opts = (arr, v) => `<option value="">bitte wählen</option>` + arr.map(o => `<option ${v === o ? "selected" : ""}>${o}</option>`).join("");
+    return `<article class="task ${s.ok ? "state-done" : s.tries ? "state-t1" : ""}" id="probe-${i}">
+      <div class="task-head"><h3>Teil 1: ${esc(p[0])}</h3><span class="meta">AFB I</span></div>
+      <div class="card">${wells}</div>
+      <div class="result"><div class="field"><label for="g${i}">Blutgruppe</label><select id="g${i}" data-g="${i}" ${s.ok ? "disabled" : ""}>${opts(["A", "B", "AB", "0"], s.g)}</select></div>
+        <div class="field"><label for="r${i}">Rhesusfaktor</label><select id="r${i}" data-r="${i}" ${s.ok ? "disabled" : ""}>${opts(["Rh-positiv", "Rh-negativ"], s.rh)}</select></div>
+        <button class="primary" type="button" data-c="${i}" ${s.ok ? "disabled" : ""}>${s.ok ? "richtig" : "Prüfen"}</button></div>
+      <div class="feedback ${s.fb ? "show " + s.fbk : ""}" role="status">${s.fb || ""}</div></article>`;
+  }).join("");
+  document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => { st[+b.dataset.p].drops[+b.dataset.w] = true; renderAll(); });
+  document.querySelectorAll("[data-g]").forEach(s => s.onchange = () => { st[+s.dataset.g].g = s.value; renderSummary(); });
+  document.querySelectorAll("[data-r]").forEach(s => s.onchange = () => { st[+s.dataset.r].rh = s.value; renderSummary(); });
+  document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => checkProbe(+b.dataset.c));
+}
+function checkProbe(i) {
+  const p = PROBEN[i], s = st[i];
+  if (s.drops.some(d => !d)) { s.fb = "Tropfen Sie zuerst alle drei Testseren auf."; s.fbk = "err"; return renderAll(); }
+  if (!s.g || !s.rh) { s.fb = "Wählen Sie Blutgruppe und Rhesusfaktor."; s.fbk = "err"; return renderAll(); }
+  s.tries++;
+  if (s.g === groupOf(p) && s.rh === rhOf(p)) { s.ok = true; s.fb = `Richtig: ${groupOf(p)} ${rhOf(p)}. ` + explain(p); s.fbk = "ok"; }
+  else if (s.tries >= 3) { s.ok = true; s.fb = `Lösung: ${groupOf(p)} ${rhOf(p)}. ` + explain(p) + " Arbeiten Sie das Prinzip mit M9 noch einmal nach."; s.fbk = "warn"; }
+  else { s.fb = s.tries === 1 ? "Noch nicht richtig. Tipp: Verklumpung mit einem Testserum bedeutet, dass das passende Antigen auf den Erythrozyten sitzt." : "Noch nicht richtig. Tipp: Anti-A erkennt Antigen A, Anti-B Antigen B, Anti-D das Rhesus-Antigen D. Keine Verklumpung bei Anti-A und Anti-B heißt Blutgruppe 0."; s.fbk = "warn"; }
+  renderAll();
+}
+function explain(p) {
+  const pos = SERA.filter((_, j) => p[j + 1]).map(x => x[1]), neg = SERA.filter((_, j) => !p[j + 1]).map(x => x[1]);
+  return (pos.length ? `Verklumpung mit ${pos.join(" und ")}` : "Keine Verklumpung") + (neg.length && pos.length ? `, keine mit ${neg.join(" und ")}.` : ".");
+}
+// Teil 2: Empfänger = Probe 1 (A Rh+) wenn bestimmt
+const BAGS = ["A Rh+", "A Rh−", "B Rh+", "B Rh−", "AB Rh+", "AB Rh−", "0 Rh+", "0 Rh−"];
+const RECIP = 3; // Probe 4: B Rh-negativ
+function compatible(bag, p) {
+  const [g, rh] = bag.split(" "); const hasA = g.includes("A"), hasB = g.includes("B"), hasD = rh === "Rh+";
+  return (!hasA || p[1]) && (!hasB || p[2]) && (!hasD || p[3]);
+}
+function renderTr() {
+  const p = PROBEN[RECIP];
+  document.getElementById("trText").innerHTML = `${esc(p[0].split(" – ")[1])} (${esc(p[0].split(" – ")[0])}) hat nach einem Unfall viel Blut verloren und braucht Erythrozytenkonzentrate. Nutzen Sie Ihr Ergebnis aus Teil 1.`;
+  document.getElementById("bags").innerHTML = BAGS.map((b, i) => { const sel = tr.sel.includes(i);
+    const cls = tr.ok ? (compatible(b, p) ? "good" : (sel ? "bad" : "")) : (sel ? "sel" : "");
+    return `<label class="bag ${cls}"><input type="checkbox" data-b="${i}" ${sel ? "checked" : ""} ${tr.ok ? "disabled" : ""}>${b}</label>`; }).join("");
+  document.querySelectorAll("[data-b]").forEach(c => c.onchange = () => { const i = +c.dataset.b; tr.sel = c.checked ? [...tr.sel, i] : tr.sel.filter(x => x !== i); renderTr(); renderSummary(); });
+  document.getElementById("trCheck").disabled = tr.ok;
+  document.getElementById("trAtt").textContent = tr.ok ? "" : (tr.tries ? `Versuch ${tr.tries} von 3` : "");
+}
+document.getElementById("trCheck").onclick = () => {
+  const p = PROBEN[RECIP], fb = document.getElementById("trFb");
+  if (!tr.sel.length) { fb.className = "feedback show err"; fb.textContent = "Wählen Sie mindestens eine Konserve."; return; }
+  tr.tries++;
+  const right = BAGS.map((b, i) => compatible(b, p) ? i : -1).filter(i => i >= 0);
+  const ok = right.length === tr.sel.length && right.every(i => tr.sel.includes(i));
+  const wrong = tr.sel.filter(i => !right.includes(i));
+  if (ok || tr.tries >= 3) {
+    tr.ok = true; fb.className = "feedback show " + (ok ? "ok" : "warn");
+    fb.innerHTML = (ok ? "Richtig. " : "Lösung (grün markiert). ") + `Frau M. hat <b>Blutgruppe B, Rh-negativ</b>: Antigen B, kein Antigen A, kein Antigen D. Im Plasma hat sie Anti-A; Anti-D würde sie nach Kontakt mit Rh-positivem Blut bilden. Erlaubt sind deshalb nur Konserven <b>ohne Antigen A</b> und <b>ohne Antigen D</b>: <b>B Rh−</b> und <b>0 Rh−</b>.`;
+  } else {
+    fb.className = "feedback show warn";
+    fb.textContent = wrong.length ? `${wrong.map(i => BAGS[i]).join(", ")}: Diese Erythrozyten tragen ein Antigen, das Frau M. selbst nicht hat. Ihre Antikörper würden sie verklumpen lassen.` : "Es fehlt noch mindestens eine passende Konserve. Welche Erythrozyten tragen überhaupt keine Antigene?";
+  }
+  renderTr(); renderSummary();
+};
+function renderChips() {
+  const c = PROBEN.map((p, i) => `<a class="chip ${st[i].ok ? "done" : st[i].tries ? "t1" : ""}" href="#probe-${i}">Probe ${i + 1}: ${st[i].ok ? "fertig" : "offen"}</a>`);
+  c.push(`<a class="chip ${tr.ok ? "done" : tr.tries ? "t1" : ""}" href="#tr">Transfusion: ${tr.ok ? "fertig" : "offen"}</a>`);
+  document.getElementById("chips").innerHTML = c.join("");
+}
+function summaryText() {
+  const L = ["GG13 · LK Gesundheit · Virtuelles Blutgruppenlabor (Wahljob LJ 2)", ""];
+  PROBEN.forEach((p, i) => { const s = st[i]; L.push(`${p[0].split(" – ")[0]}: ` + SERA.map((x, j) => `${x[1]} ${s.drops[j] ? (p[j + 1] ? "Verklumpung" : "keine") : "–"}`).join(" | ") + ` → meine Bestimmung: ${s.g || "–"} ${s.rh || ""}${s.ok ? (s.g === groupOf(p) && s.rh === rhOf(p) ? " (richtig)" : ` (Lösung: ${groupOf(p)} ${rhOf(p)})`) : ""}`); });
+  L.push("", `Transfusion für Frau M.: ${tr.sel.map(i => BAGS[i]).join(", ") || "–"}${tr.ok ? " (Lösung: B Rh−, 0 Rh−)" : ""}`);
+  return L.join("\n");
+}
+function renderSummary() { document.getElementById("summary").textContent = summaryText(); renderChips(); }
+function renderAll() { renderProben(); renderTr(); renderSummary(); }
+document.getElementById("copyBtn").onclick = async () => { const m = document.getElementById("saveMsg");
+  try { await navigator.clipboard.writeText(summaryText()); m.className = "feedback show ok"; m.textContent = "Kopiert. Fügen Sie den Text in Ihr Portfolio ein."; }
+  catch (e) { m.className = "feedback show err"; m.textContent = "Kopieren ist hier nicht möglich. Markieren Sie den Text von Hand."; } };
+document.getElementById("resetBtn").onclick = () => { st = PROBEN.map(() => ({ drops: [false, false, false], g: "", rh: "", tries: 0, ok: false })); tr = { sel: [], tries: 0, ok: false }; document.getElementById("trFb").className = "feedback"; renderAll(); };
+renderAll();
+</script>
+<footer class="wrap notice" style="padding-block:0 24px">Erzbischöfliches Berufskolleg Neuss · LK Gesundheit · Diese Seite speichert nichts auf einem Server.</footer>
+</body>
+</html>
